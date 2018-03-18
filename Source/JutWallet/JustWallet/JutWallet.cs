@@ -1,6 +1,7 @@
 ﻿
 using HBitcoin.KeyManagement;
 using JustWallet.Helpers;
+using JutWallet.Helpers;
 using NBitcoin;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace JustWallet
     class JutWallet
     {
         private static List<string> _allowedCommands = new List<string> { "\\help", "\\create",  "\\recover", "\\balance", "\\history", "\\receive", "\\send", "\\exit", "\\clear - clear the console" };
-        
+        private static Safe _safe;
         #region Main
         static void Main(string[] args)
         {
@@ -36,7 +37,10 @@ namespace JustWallet
                         break;
                     case "\\create":
                         CreateWallet(out safe);
-                        break;     
+                        break;
+                    case "\\recover":
+                        RecoverWallet(out safe);
+                        break;
                     default:
                         if(!CommonWalletHelper.CheckForSpecialCommand(input))
                         {
@@ -47,6 +51,8 @@ namespace JustWallet
             }
 
         }
+
+        
         #endregion
 
         #region Main Methods
@@ -70,7 +76,7 @@ namespace JustWallet
         {
             Network network = null;
             safe = null;
-            CreateWalletHelper.SelectNetwork(out network);
+            CommonWalletHelper.SelectNetwork(out network);
             string filePath = string.Empty;
             string password = string.Empty;
             bool shouldContinue = true;
@@ -85,20 +91,45 @@ namespace JustWallet
             Mnemonic mnemonic;
             CreateWalletHelper.CreateJsonFile(password, filePath, network, out mnemonic, out safe);
             Console.WriteLine("File Successfuly Created!\nAfter 2 second full information will be presented\n");
+            _safe = safe;
             Thread.Sleep(2000);
             Console.Clear();
-            Console.WriteLine("Wallet file location: {0}\n",filePath);
-            Console.WriteLine("Password: {0}\n", password);
-            Console.WriteLine("Please write down the mnemonic phrases!\nIf you lose your .json file, the only way to recover it is mnemonic + password!\n");
-            Console.WriteLine("Mnemonic {0}\n",mnemonic);
-            var address = CommonWalletHelper.GenerateBitcointAddress(safe);
-            var privateKey = CommonWalletHelper.GetPrivateKey(safe, address);
-            Console.WriteLine("IMPORTANT! This is your private key! Do not lose it\nand do not show it to anyone!If your private key\nis compromised, you will lose all of your bitcoins!\n");
-            Console.WriteLine("PRIVATE KEY: {0}\n",privateKey);
-            Console.WriteLine("This is your first bitcoin address! : {0}\n", address);
-            Console.WriteLine("Network : {0}\n",safe.Network);
-            var publicKey = safe.GetBitcoinExtPubKey();
-            Console.WriteLine("This is your public key: {0}",publicKey);
+            CreateWalletHelper.PrintInformation(safe, filePath, mnemonic, password);
+        }
+        private static void RecoverWallet(out Safe safe)
+        {
+            safe = null;
+            try
+            {   
+                
+                Mnemonic mnemonic;
+                string password;
+                byte selectedWay;
+                Console.WriteLine("IMPORTANT!: The wallet cannot check if the password you passed is correct", ConsoleColor.Red);
+                Console.WriteLine("Recovery required valid password and mnemonic phrase");
+                RecoverWalletHelper.GetPassword(out password);
+                RecoverWalletHelper.GetSelectedWayOfMnemonicInput(out selectedWay);
+                if (selectedWay == 0)
+                {
+                    RecoverWalletHelper.LoadMnemonicFromFile(out mnemonic);
+                }
+                else
+                {
+                    RecoverWalletHelper.LoadMnemonicFromInput(out mnemonic);
+                }
+                Network network;
+                CommonWalletHelper.SelectNetwork(out network);
+                string directoryPath;
+                CommonWalletHelper.GetDirectoryPath(out directoryPath);
+                RecoverWalletHelper.TryRecoverWallet(password, mnemonic, directoryPath, network, out safe);
+                Console.WriteLine("Wallet successfuly recoverd!");
+                _safe = safe;
+            }
+            catch(Exception)
+            {
+                Console.WriteLine("Recovery FAILED!");
+            }
+
         }
         #endregion       
     }
