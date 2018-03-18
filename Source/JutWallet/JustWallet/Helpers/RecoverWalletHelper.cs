@@ -42,7 +42,7 @@ namespace JutWallet.Helpers
                 }
             } while (shouldContinue);
             
-            password = inputPassword;
+            password =  CryptoHelper.GetSHA256PasswordAsHexString(inputPassword);
         }
         public static void GetSelectedWayOfMnemonicInput(out byte option)
         {

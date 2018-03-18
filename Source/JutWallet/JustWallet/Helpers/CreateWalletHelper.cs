@@ -1,4 +1,5 @@
 ﻿using HBitcoin.KeyManagement;
+using JutWallet.Helpers;
 using NBitcoin;
 using System;
 using System.Collections.Generic;
@@ -83,7 +84,8 @@ namespace JustWallet.Helpers
                     Console.Clear();
                 }
             } while (shouldContinue);
-            password = inputPassword;
+            
+            password =  CryptoHelper.GetSHA256PasswordAsHexString(inputPassword);
         }
         public static void PrintInformation(Safe safe, string filePath, Mnemonic mnemonic, string password)
         {
