@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 namespace JustWallet
 {
-    class JustWallet
+    class JutWallet
     {
         private static List<string> _allowedCommands = new List<string> { "\\help", "\\create",  "\\recover", "\\balance", "\\history", "\\receive", "\\send", "\\exit", "\\clear - clear the console" };
         
