@@ -152,6 +152,7 @@ namespace JustWallet.Helpers
                 using (var writter = new StreamWriter(_walletConfigFileName))
                 {
                     writter.WriteLine(JsonConvert.SerializeObject(config));
+                   
                 }
             }
         }

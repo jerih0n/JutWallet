@@ -17,9 +17,6 @@ namespace JustWallet
         #region Main
         static void Main(string[] args)
         {
-            var a = Console.ReadLine();
-            var ss = CryptoHelper.GetSHA256(a);
-            Console.WriteLine(ss);
             GetConfig(out _config);
             Safe safe = null;           
             FirstMessages();
@@ -165,7 +162,6 @@ namespace JustWallet
             string password;
             Console.WriteLine();
             RecoverWalletHelper.GetPassword(out password);
-            Console.WriteLine(password);
             do
             {
                 Console.WriteLine("Please enter the full file path of the wallet json file:");
@@ -175,7 +171,12 @@ namespace JustWallet
             Console.WriteLine("Please enter the name of the wallet: ");
             var name = Console.ReadLine();
             RecoverWalletHelper.LoadFromExistingWalletFile(password, string.Format("{0}\\{1}", path, name), out safe);
-            _safe = safe;           
+            _safe = safe;
+            var sha256Public = CryptoHelper.GetSHA256(safe.GetBitcoinExtPubKey().ToString());
+            if (!CommonWalletHelper.IsWalletSavedInConfig(_config, sha256Public))
+            {
+                CommonWalletHelper.AddNewRecordInWalletConfig(_config, sha256Public);
+            }
         }
         private static void GetAddress()
         {
