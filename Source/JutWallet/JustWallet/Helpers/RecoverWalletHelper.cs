@@ -110,12 +110,15 @@ namespace JutWallet.Helpers
         }
         public static void LoadFromExistingWalletFile(string sha256Password, string walletFile, out Safe safe)
         {
+            Console.WriteLine(walletFile);
             safe = null;
             try
             {
                 safe = Safe.Load(sha256Password, walletFile);
+                Console.WriteLine();
+                Console.WriteLine("Wallet Load Successfully!");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 Console.WriteLine("FATAL ERROR! Load FAILD!");
             }
