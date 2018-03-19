@@ -18,6 +18,10 @@ namespace JutWallet.Helpers
             var mnemonicAsString = Console.ReadLine();
             mnemonic = new Mnemonic(mnemonicAsString);
         }
+        /// <summary>
+        /// Get Entered Password and encryp with SHA256
+        /// </summary>
+        /// <param name="password"></param>
         public static void GetPassword(out string password)
         {
             password = string.Empty;
@@ -42,7 +46,7 @@ namespace JutWallet.Helpers
                 }
             } while (shouldContinue);
             
-            password =  CryptoHelper.GetSHA256PasswordAsHexString(inputPassword);
+            password =  CryptoHelper.GetSHA256(inputPassword);
         }
         public static void GetSelectedWayOfMnemonicInput(out byte option)
         {
@@ -100,5 +104,22 @@ namespace JutWallet.Helpers
             filePath += string.Format("\\wallet_{0}", guid); // the file name, using guid to avoid collitions
             safe = Safe.Recover(mnemonic, password, filePath, network);
         }
+        public static void GetAddress(int index)
+        {
+           
+        }
+        public static void LoadFromExistingWalletFile(string sha256Password, string walletFile, out Safe safe)
+        {
+            safe = null;
+            try
+            {
+                safe = Safe.Load(sha256Password, walletFile);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("FATAL ERROR! Load FAILD!");
+            }
+        }
+
     }
 }

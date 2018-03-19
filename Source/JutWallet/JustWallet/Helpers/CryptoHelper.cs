@@ -6,7 +6,7 @@ namespace JutWallet.Helpers
 {
     public static class CryptoHelper
     {
-        public static string GetSHA256PasswordAsHexString(string normalPassword)
+        public static string GetSHA256(string normalPassword)
         {
             StringBuilder builder = new StringBuilder();
             byte[] byteArray = Encoding.Unicode.GetBytes(normalPassword);

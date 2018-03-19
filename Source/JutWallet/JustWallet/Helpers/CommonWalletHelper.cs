@@ -1,5 +1,7 @@
 ﻿using HBitcoin.KeyManagement;
+using JutWallet.Classes;
 using NBitcoin;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +12,7 @@ namespace JustWallet.Helpers
 {
     public static class CommonWalletHelper
     {
+        private static string _walletConfigFileName = "jut_config.json";
         public static bool CheckFilePath(string path)
         {
             return File.Exists(path);
@@ -92,6 +95,69 @@ namespace JustWallet.Helpers
                 CheckForSpecialCommand(directoryPath.ToLower());
                 shouldContinue = !CheckDirectory(directoryPath);
             } while (shouldContinue);
+        }
+        public static bool TryToOpenWalletConfig(out WalletConfig configInfo)
+        {
+            configInfo = null;
+            if (File.Exists(_walletConfigFileName))
+            {
+                try
+                {
+                    using (var reader = new StreamReader(_walletConfigFileName))
+                    {
+                        configInfo = JsonConvert.DeserializeObject<WalletConfig>(reader.ReadToEnd());
+                        if(configInfo.WalletLastAddressIndexUsed == null)
+                        {
+                            configInfo.WalletLastAddressIndexUsed = new Dictionary<string, int>();
+                        }
+                        return true;
+                    }
+                }
+                catch(Exception)
+                {
+                    return false;
+                }
+                
+            }
+            return false; 
+        }
+        public static void CreateWalletConfigFile()
+        {
+            using(var writter = new StreamWriter(_walletConfigFileName))
+            {
+                var newWallet = new WalletConfig()
+                {
+                    WalletLastAddressIndexUsed = new Dictionary<string, int>()
+                };
+                writter.WriteLine(JsonConvert.SerializeObject(newWallet));
+            }
+        }
+        public static void AddNewRecordInWalletConfig(WalletConfig config, string sha256PublicKey)
+        { 
+            if (IsWalletSavedInConfig(config, sha256PublicKey))
+            {
+                config.WalletLastAddressIndexUsed[sha256PublicKey] += 1;
+            }
+            else
+            {
+                config.WalletLastAddressIndexUsed.Add(sha256PublicKey, 1);
+            }
+            TryUpdateConfig(config);
+        }
+        public static void TryUpdateConfig(WalletConfig config)
+        {
+            if (File.Exists(_walletConfigFileName))
+            {
+                File.Delete(_walletConfigFileName);
+                using (var writter = new StreamWriter(_walletConfigFileName))
+                {
+                    writter.WriteLine(JsonConvert.SerializeObject(config));
+                }
+            }
+        }
+        public static bool IsWalletSavedInConfig(WalletConfig config,string sha256PublicKey)
+        {
+            return config.WalletLastAddressIndexUsed.ContainsKey(sha256PublicKey);
         }
         
 

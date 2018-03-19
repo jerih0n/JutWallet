@@ -85,7 +85,7 @@ namespace JustWallet.Helpers
                 }
             } while (shouldContinue);
             
-            password =  CryptoHelper.GetSHA256PasswordAsHexString(inputPassword);
+            password =  CryptoHelper.GetSHA256(inputPassword);
         }
         public static void PrintInformation(Safe safe, string filePath, Mnemonic mnemonic, string password)
         {

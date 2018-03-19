@@ -1,23 +1,24 @@
 ﻿
 using HBitcoin.KeyManagement;
 using JustWallet.Helpers;
+using JutWallet.Classes;
 using JutWallet.Helpers;
 using NBitcoin;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text.RegularExpressions;
 using System.Threading;
 namespace JustWallet
 {
     class JutWallet
     {
-        private static List<string> _allowedCommands = new List<string> { "\\help", "\\create",  "\\recover", "\\balance", "\\history", "\\receive", "\\send", "\\exit", "\\clear - clear the console" };
+        private static List<string> _allowedCommands = new List<string> { "\\help", "\\create", "\\get-address", "\\load","\\balance", "\\history", "\\receive", "\\send", "\\exit", "\\clear - clear the console" };
         private static Safe _safe;
+        private static WalletConfig _config;
         #region Main
         static void Main(string[] args)
         {
-            Safe safe = null;
+            GetConfig(out _config);
+            Safe safe = null;           
             FirstMessages();
             string input = string.Empty;
             while(true)
@@ -41,6 +42,11 @@ namespace JustWallet
                     case "\\recover":
                         RecoverWallet(out safe);
                         break;
+                    case "\\get-address":
+                        break;
+                    case "\\load":
+                        LoadWallet(out safe);
+                        break;
                     default:
                         if(!CommonWalletHelper.CheckForSpecialCommand(input))
                         {
@@ -56,6 +62,16 @@ namespace JustWallet
         #endregion
 
         #region Main Methods
+        private static void GetConfig(out WalletConfig config)
+        {
+            config = null;
+            if(!CommonWalletHelper.TryToOpenWalletConfig(out config))
+            {
+                CommonWalletHelper.CreateWalletConfigFile();
+                config = new WalletConfig();
+            }
+
+        }
         private static void FirstMessages()
         {
             Console.WriteLine("--------------------------------------------------------------------------");
@@ -95,6 +111,8 @@ namespace JustWallet
             Thread.Sleep(2000);
             Console.Clear();
             CreateWalletHelper.PrintInformation(safe, filePath, mnemonic, password);
+            var sha256PublicKey = CryptoHelper.GetSHA256(safe.GetBitcoinExtPubKey().ToString());
+            CommonWalletHelper.AddNewRecordInWalletConfig(_config, sha256PublicKey);
         }
         private static void RecoverWallet(out Safe safe)
         {
@@ -124,6 +142,11 @@ namespace JustWallet
                 RecoverWalletHelper.TryRecoverWallet(password, mnemonic, directoryPath, network, out safe);
                 Console.WriteLine("Wallet successfuly recoverd!");
                 _safe = safe;
+                var sha256Public = CryptoHelper.GetSHA256(safe.GetBitcoinExtPubKey().ToString());
+                if(!CommonWalletHelper.IsWalletSavedInConfig(_config, sha256Public))
+                {
+                    CommonWalletHelper.AddNewRecordInWalletConfig(_config, sha256Public);
+                }
             }
             catch(Exception)
             {
@@ -131,6 +154,30 @@ namespace JustWallet
             }
 
         }
+        public static void LoadWallet(out Safe safe)
+        {
+            safe = null;
+            string path;
+            bool @continue = true;
+            string password;
+            Console.WriteLine();
+            RecoverWalletHelper.GetPassword(out password);
+            do
+            {
+                Console.WriteLine("Please enter the full file path of the wallet json file:");
+                 path = Console.ReadLine();
+                @continue = !CommonWalletHelper.CheckDirectory(path);
+            } while (@continue);
+            Console.WriteLine("Please enter the name of the wallet: ");
+            var name = Console.ReadLine();
+            RecoverWalletHelper.LoadFromExistingWalletFile(password, string.Format(@"{0}\{1}.json", path, name), out safe);
+            _safe = safe;           
+        }
+        private static void GetAddress()
+        {
+           
+        }
+        
         #endregion       
     }
 }
